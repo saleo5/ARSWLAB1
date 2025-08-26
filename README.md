@@ -1,89 +1,374 @@
+# 🧵 Multithreading Laboratory - Blacklist Validator
 
-### Escuela Colombiana de Ingeniería
-### Arquitecturas de Software - ARSW
-## Ejercicio Introducción al paralelismo - Hilos - Caso BlackListSearch
+## 👥 **Team Members**
 
+- [Jesús Alfonso Pinzón Vega](https://github.com/JAPV-X2612)
+- [David Felipe Velásquez Contreras](https://github.com/DavidVCAI)
 
-### Dependencias:
-####   Lecturas:
-*  [Threads in Java](http://beginnersbook.com/2013/03/java-threads/)  (Hasta 'Ending Threads')
-*  [Threads vs Processes]( http://cs-fundamentals.com/tech-interview/java/differences-between-thread-and-process-in-java.php)
+---
 
-### Descripción
-  Este ejercicio contiene una introducción a la programación con hilos en Java, además de la aplicación a un caso concreto.
-  
+## 📚 **Required Readings**
 
-**Parte I - Introducción a Hilos en Java**
+Before starting this laboratory, we review the following resources:
 
-1. De acuerdo con lo revisado en las lecturas, complete las clases CountThread, para que las mismas definan el ciclo de vida de un hilo que imprima por pantalla los números entre A y B.
-2. Complete el método __main__ de la clase CountMainThreads para que:
-	1. Cree 3 hilos de tipo CountThread, asignándole al primero el intervalo [0..99], al segundo [99..199], y al tercero [200..299].
-	2. Inicie los tres hilos con 'start()'.
-	3. Ejecute y revise la salida por pantalla. 
-	4. Cambie el incio con 'start()' por 'run()'. Cómo cambia la salida?, por qué?.
+- [Threads in Java](http://beginnersbook.com/2013/03/java-threads/) *(Up to 'Ending Threads')*
+- [Threads vs Processes](http://cs-fundamentals.com/tech-interview/java/differences-between-thread-and-process-in-java.php)
 
-**Parte II - Ejercicio Black List Search**
+---
 
+## 🚀 **Laboratory Overview**
 
-Para un software de vigilancia automática de seguridad informática se está desarrollando un componente encargado de validar las direcciones IP en varios miles de listas negras (de host maliciosos) conocidas, y reportar aquellas que existan en al menos cinco de dichas listas. 
+### 📋 **Prerequisites & Setup**
 
-Dicho componente está diseñado de acuerdo con el siguiente diagrama, donde:
+**Java** and **Maven** dependencies were installed from official sources and added to environment variables for proper utilization.
 
-- HostBlackListsDataSourceFacade es una clase que ofrece una 'fachada' para realizar consultas en cualquiera de las N listas negras registradas (método 'isInBlacklistServer'), y que permite también hacer un reporte a una base de datos local de cuando una dirección IP se considera peligrosa. Esta clase NO ES MODIFICABLE, pero se sabe que es 'Thread-Safe'.
+#### 🔧 **Maven Configuration**
 
-- HostBlackListsValidator es una clase que ofrece el método 'checkHost', el cual, a través de la clase 'HostBlackListDataSourceFacade', valida en cada una de las listas negras un host determinado. En dicho método está considerada la política de que al encontrarse un HOST en al menos cinco listas negras, el mismo será registrado como 'no confiable', o como 'confiable' en caso contrario. Adicionalmente, retornará la lista de los números de las 'listas negras' en donde se encontró registrado el HOST.
+To easily execute the project with `mvn`, we added the following configuration to the `pom.xml`:
 
-![](img/Model.png)
+```xml
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.1.0</version>
+            <configuration>
+                <mainClass>edu.eci.arsw.blacklistvalidator.Main</mainClass>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
 
-Al usarse el módulo, la evidencia de que se hizo el registro como 'confiable' o 'no confiable' se dá por lo mensajes de LOGs:
+#### ⚡ **Quick Execution Command**
 
-INFO: HOST 205.24.34.55 Reported as trustworthy
+We use the following command to clean, compile, and execute the `Main.java` class:
 
-INFO: HOST 205.24.34.55 Reported as NOT trustworthy
+```bash
+mvn clean compile exec:java
+```
 
+---
 
-Al programa de prueba provisto (Main), le toma sólo algunos segundos análizar y reportar la dirección provista (200.24.34.55), ya que la misma está registrada más de cinco veces en los primeros servidores, por lo que no requiere recorrerlos todos. Sin embargo, hacer la búsqueda en casos donde NO hay reportes, o donde los mismos están dispersos en las miles de listas negras, toma bastante tiempo.
+## 🎯 **Part I: Introduction to Threads in Java**
 
-Éste, como cualquier método de búsqueda, puede verse como un problema [vergonzosamente paralelo](https://en.wikipedia.org/wiki/Embarrassingly_parallel), ya que no existen dependencias entre una partición del problema y otra.
+### 📝 **Objective**
 
-Para 'refactorizar' este código, y hacer que explote la capacidad multi-núcleo de la CPU del equipo, realice lo siguiente:
+Complete the **CountThread** class to define the lifecycle of a thread that prints numbers between A and B on screen, and analyze the differences between execution methods.
 
-1. Cree una clase de tipo Thread que represente el ciclo de vida de un hilo que haga la búsqueda de un segmento del conjunto de servidores disponibles. Agregue a dicha clase un método que permita 'preguntarle' a las instancias del mismo (los hilos) cuantas ocurrencias de servidores maliciosos ha encontrado o encontró.
+### 🔨 **Implementation Details**
 
-2. Agregue al método 'checkHost' un parámetro entero N, correspondiente al número de hilos entre los que se va a realizar la búsqueda (recuerde tener en cuenta si N es par o impar!). Modifique el código de este método para que divida el espacio de búsqueda entre las N partes indicadas, y paralelice la búsqueda a través de N hilos. Haga que dicha función espere hasta que los N hilos terminen de resolver su respectivo sub-problema, agregue las ocurrencias encontradas por cada hilo a la lista que retorna el método, y entonces calcule (sumando el total de ocurrencuas encontradas por cada hilo) si el número de ocurrencias es mayor o igual a _BLACK_LIST_ALARM_COUNT_. Si se da este caso, al final se DEBE reportar el host como confiable o no confiable, y mostrar el listado con los números de las listas negras respectivas. Para lograr este comportamiento de 'espera' revise el método [join](https://docs.oracle.com/javase/tutorial/essential/concurrency/join.html) del API de concurrencia de Java. Tenga también en cuenta:
+We developed the **CountThread** class that extends `Thread`, which:
+  - Displays specific thread execution in console
+  - Defines threads within an inclusive range `[A, B]`
+  - Provides execution insights through logging
 
-	* Dentro del método checkHost Se debe mantener el LOG que informa, antes de retornar el resultado, el número de listas negras revisadas VS. el número de listas negras total (línea 60). Se debe garantizar que dicha información sea verídica bajo el nuevo esquema de procesamiento en paralelo planteado.
+#### 🧪 **Testing Methodology**
 
-	* Se sabe que el HOST 202.24.34.55 está reportado en listas negras de una forma más dispersa, y que el host 212.24.24.55 NO está en ninguna lista negra.
+The **CountMainThreads** class creates threads and tests differences between:
 
+  - **`start()`** method execution
+  - **`run()`** method execution
 
-**Parte II.I Para discutir la próxima clase (NO para implementar aún)**
+#### **Thread Configuration:**
 
-La estrategia de paralelismo antes implementada es ineficiente en ciertos casos, pues la búsqueda se sigue realizando aún cuando los N hilos (en su conjunto) ya hayan encontrado el número mínimo de ocurrencias requeridas para reportar al servidor como malicioso. Cómo se podría modificar la implementación para minimizar el número de consultas en estos casos?, qué elemento nuevo traería esto al problema?
+- **Thread 1**: Range `[0, 99]`
+- **Thread 2**: Range `[99, 199]` 
+- **Thread 3**: Range `[200, 299]`
 
-**Parte III - Evaluación de Desempeño**
+Logging mechanisms track execution time in milliseconds for performance analysis.
 
-A partir de lo anterior, implemente la siguiente secuencia de experimentos para realizar las validación de direcciones IP dispersas (por ejemplo 202.24.34.55), tomando los tiempos de ejecución de los mismos (asegúrese de hacerlos en la misma máquina):
+### 🏗️ **Build Process**
 
-1. Un solo hilo.
-2. Tantos hilos como núcleos de procesamiento (haga que el programa determine esto haciendo uso del [API Runtime](https://docs.oracle.com/javase/7/docs/api/java/lang/Runtime.html)).
-3. Tantos hilos como el doble de núcleos de procesamiento.
-4. 50 hilos.
-5. 100 hilos.
+First, we compile the project:
 
-Al iniciar el programa ejecute el monitor jVisualVM, y a medida que corran las pruebas, revise y anote el consumo de CPU y de memoria en cada caso. ![](img/jvisualvm.png)
+```bash
+mvn compile
+```
 
-Con lo anterior, y con los tiempos de ejecución dados, haga una gráfica de tiempo de solución vs. número de hilos. Analice y plantee hipótesis con su compañero para las siguientes preguntas (puede tener en cuenta lo reportado por jVisualVM):
+<img src="assets/images/image-0.png" alt="Build Project" width="70%">
 
-**Parte IV - Ejercicio Black List Search**
+### ▶️ **Execution Examples**
 
-1. Según la [ley de Amdahls](https://www.pugetsystems.com/labs/articles/Estimating-CPU-Performance-using-Amdahls-Law-619/#WhatisAmdahlsLaw?):
+We execute directly with **Java**:
 
-	![](img/ahmdahls.png), donde _S(n)_ es el mejoramiento teórico del desempeño, _P_ la fracción paralelizable del algoritmo, y _n_ el número de hilos, a mayor _n_, mayor debería ser dicha mejora. Por qué el mejor desempeño no se logra con los 500 hilos?, cómo se compara este desempeño cuando se usan 200?. 
+```bash
+java -cp target/classes edu.eci.arsw.threads.CountThreadsMain
+```
 
-2. Cómo se comporta la solución usando tantos hilos de procesamiento como núcleos comparado con el resultado de usar el doble de éste?.
+#### 🔄 **Concurrent Execution with `start()`**
 
-3. De acuerdo con lo anterior, si para este problema en lugar de 100 hilos en una sola CPU se pudiera usar 1 hilo en cada una de 100 máquinas hipotéticas, la ley de Amdahls se aplicaría mejor?. Si en lugar de esto se usaran c hilos en 100/c máquinas distribuidas (siendo c es el número de núcleos de dichas máquinas), se mejoraría?. Explique su respuesta.
+<img src="assets/images/image-1.png" alt="Threads Execution with start()" width="70%">
 
+***Result***: Threads execute **concurrently** when using `start()`.
 
+#### 📋 **Sequential Execution with `run()`**
 
+<img src="assets/images/image-2.png" alt="Threads Execution with run()" width="30%">
+
+***Result***: Threads execute **sequentially** in the main thread when using `run()`.
+
+### 🧠 **Key Insights & Analysis**
+
+#### **`start()` Method:**
+- ✅ Creates a **new execution thread**
+- ✅ Automatically calls the `run()` method
+- ✅ Enables true **concurrency/parallelism**
+
+#### **`run()` Method:**
+- ❌ Does **not** create a new thread
+- ❌ Executes in the **current thread**
+- ❌ Behaves like a **normal method call**
+
+<img src="assets/images/image-3.png" alt="Runnable Interface" width="70%">
+
+**Conclusion:** Using `run()` executes the code on the current thread, so tasks run **sequentially** and do not achieve true parallelism. Using `start()` creates a new thread, allowing concurrent execution and different output ordering.
+
+#### 🔗 **Thread Synchronization**
+
+**`Thread.join()`** ensures that the main program waits for other threads to complete before termination.
+
+> **Note**: Whether we achieve *parallelism* or *concurrency* depends on the number of available CPU cores.
+
+---
+
+## 🛡️ **Part II: Blacklist Search Exercise**
+
+### 🎯 **Problem Statement**
+
+For **automatic cybersecurity monitoring software**, we are developing a component responsible for validating IP addresses across thousands of known blacklists (malicious hosts) and reporting those that exist in at least **5** of these lists.
+
+### 🏗️ **System Architecture**
+
+The component is designed according to the following class model:
+
+<img src="assets/images/model.png" alt="Class Model" width="80%">
+
+#### **Key Components:**
+
+##### **HostBlackListsDataSourceFacade**
+
+- Provides a **facade** for querying any of the N registered blacklists
+- **Method**: `isInBlacklistServer()` - checks if IP exists in specific blacklist
+- Allows reporting to local database when IP is considered dangerous
+- **Thread-Safe** (NOT MODIFIABLE)
+
+##### **HostBlackListsValidator**
+
+- Offers the `checkHost()` method for IP validation
+- **Policy**: Host found in ≥ 5 blacklists → **NOT TRUSTWORTHY**
+- **Policy**: Host found in < 5 blacklists → **TRUSTWORTHY**
+- Returns list of blacklist numbers where HOST was found
+
+### 📊 **Initial Analysis**
+
+After executing `mvn clean compile exec:java`, we observed **80,000 blacklists** to process:
+
+<img src="assets/images/image-4.png" alt="BlackListSearch Execution" width="70%">
+
+### 🕐 **Performance Challenge**
+
+The provided test program (**Main**) takes only seconds to analyze `200.24.34.55` since it's registered multiple times in the first servers. However, searches where there are **NO reports** or where reports are **dispersed across thousands** of blacklists take considerable time.
+
+### 🎯 **Parallelization Strategy**
+
+This search method can be viewed as an **[embarrassingly parallel problem](https://en.wikipedia.org/wiki/Embarrassingly_parallel)** since there are no dependencies between different problem partitions.
+
+We implemented **parallel blacklist search** by dividing the workload of checking 80,000 blacklists among multiple threads.
+
+#### 🏗️ **Implementation Architecture**
+
+##### 1️⃣ **BlackListSearchThread Class**
+
+- **Extends**: `Thread`
+- **Function**: Searches specific blacklist segments
+- **Scope**: Individual thread workload management
+- **Method**: Allows querying instances about malicious server occurrences found
+
+##### 2️⃣ **HostBlackListsValidator Modification**
+
+- **New Parameter**: Added integer `N` to `checkHost(String ipAddress, int N)`
+- **Function**: `N` represents number of threads for parallel search
+- **Implementation**: Divides search space into `N` parts and parallelizes search
+
+#### 🔄 **Synchronization Strategy**
+
+- **`thread.join()`**: Wait for all `N` threads to complete their sub-problems
+- **Result aggregation**: Collect occurrences found by each thread
+- **Final calculation**: Sum total occurrences to determine if ≥ `BLACK_LIST_ALARM_COUNT`
+- **Logging**: Maintain original LOG showing reviewed vs total lists (line 60)
+- **Reporting**: Show list of blacklist numbers where HOST was found
+
+### 🧪 **Performance Testing**
+
+Execute the parallel implementation:
+
+```bash
+java -cp target/classes edu.eci.arsw.blacklistvalidator.ParallelMain
+```
+
+#### 📈 **Test Results**
+
+##### **Test 1** - *Less Dispersed IP* (`200.24.34.55`)
+- **Threads**: 4
+- **Execution Time**: ~27 seconds
+- **Found in**: [23, 50, 200, 500, 1000]
+- **Result**: <u>**NOT RELIABLE**</u> (5 occurrences)
+
+##### **Test 2** - *More Dispersed IP* (`202.24.34.55`)
+- **Threads**: 4  
+- **Execution Time**: ~25 seconds
+- **Found in**: [29, 10034, 20200, 31000, 70500]
+- **Result**: <u>**NOT RELIABLE**</u> (5 occurrences)
+- **Observation**: Different threads detect different occurrences based on their segments
+
+##### **Test 3** - *Clean IP* (`212.24.24.55`)
+- **Threads**: 4
+- **Execution Time**: ~25 seconds
+- **Found in**: []
+- **Result**: <u>**RELIABLE**</u> (0 occurrences)
+
+### 📊 **Performance Scaling Analysis**
+
+Using the worst-case scenario (*most dispersed IP*: `202.24.34.55`):
+
+| **Threads** | **Execution Time** | **Performance Improvement** |
+|:-----------:|:-----------------:|:---------------------------:|
+| 1 thread    | 115,219 ms (~115s) | Baseline                   |
+| 2 threads   | 51,285 ms (~51s)   | **55% improvement** ✨     |
+| 4 threads   | 25,432 ms (~25s)   | **78% improvement** 🚀     |
+| 8 threads   | 13,460 ms (~13s)   | **88% improvement** ⚡     |
+
+#### 🖥️ **8-Thread Execution Logs**
+
+<img src="assets/images/image-5.png" alt="8 Thread Search Logs" width="70%">
+
+---
+
+## 🔍 **Part II.I: Discussion Points for Next Class**
+
+### 🤔 **Current Inefficiency**
+
+The implemented parallelism strategy is **inefficient** in certain cases because the search continues even when the N threads (collectively) have already found the minimum number of occurrences required to report the server as malicious.
+
+### 💡 **Proposed Optimization**
+
+**Question**: How could we modify the implementation to minimize the number of queries in these cases? What new element would this bring to the problem?
+
+The implementation could be optimized by introducing an early termination mechanism: once the combined results from all active threads reach the minimum required number of occurrences, all remaining threads should stop their searches immediately. This could be achieved using shared state variables (e.g., an AtomicInteger counter) to track the total occurrences and a cancellation flag to signal threads to exit early. 
+
+However, this introduces new complexity in the form of thread synchronization and coordination. Threads would need safe, concurrent access to the shared counter and a mechanism to check the cancellation flag efficiently, which adds synchronization overhead and slightly increases implementation complexity.
+
+## 📊 **Part III: Performance Evaluation**
+
+### 🧪 **Experimental Setup**
+
+Implement the following experiment sequence to validate dispersed IP addresses (e.g., `202.24.34.55`), measuring execution times on the same machine:
+
+#### **Test Scenarios:**
+
+1. **Single Thread**
+2. **Threads = CPU Cores** (determined using [Runtime API](https://docs.oracle.com/javase/7/docs/api/java/lang/Runtime.html))
+3. **Threads = 2 × CPU Cores**
+4. **50 Threads**
+5. **100 Threads**
+
+### 📈 **Monitoring Setup**
+
+We execute **jVisualVM** at program start and monitor:
+
+- **CPU consumption** for each test case
+- **Memory usage** for each test case
+
+<img src="assets/images/java_visual_vm.png" alt="Java VisualVM" width="70%">
+
+### 📊 **Results & Analysis**
+
+#### **Execution Time Results**
+
+| **Test Scenario** | **Number of Threads** | **Execution Time (ms)** | **CPU Usage (%)** | **Memory Usage (MB)** |
+|:-----------------:|:--------------------:|:----------------------:|:----------------:|:-------------------:|
+| Single Thread | 1 | 117,346 | 12.5 | 45 |
+| CPU Cores | 8 | 19,007 | 85.2 | 78 |
+| 2×CPU Cores | 16 | 12,854 | 95.8 | 125 |
+| 50 Threads | 50 | 14,480 | 98.4 | 245 |
+| 100 Threads | 100 | 28,200 | 99.1 | 420 |
+
+#### 📊 **Performance Graph**
+
+<img src="assets/images/performance_graph.png" alt="Execution Time vs Number of Threads" width="70%">
+
+*Graph: Solution time vs. number of threads*
+
+---
+
+## 🔬 **Part IV: Analysis & Theoretical Discussion**
+
+### 📐 **Amdahl's Law Analysis**
+
+According to **[Amdahl's Law](https://www.pugetsystems.com/labs/articles/Estimating-CPU-Performance-using-Amdahls-Law-619/#WhatisAmdahlsLaw?)**:
+
+<img src="assets/images/amdahls_law.png" alt="Amdahls Law Formula" width="70%">
+
+Where:
+
+- **S(n)**: Theoretical performance improvement
+- **P**: Parallelizable fraction of the algorithm  
+- **n**: Number of threads
+
+#### 🔍 **Analysis Questions**
+
+##### **Question 1**: Amdahl's Law Limitations
+According to Amdahl's Law, with greater `n`, there should be greater improvement. 
+
+**Analysis Points**:
+- Why is the best performance **NOT** achieved with 500 threads?
+- How does performance with **200 threads** compare?
+- What factors limit scalability beyond optimal thread count?
+
+**Hypothesis**: Under Amdahl’s Law, speedup is capped by the non-parallel portion (1−P), so beyond some thread count additional threads mostly amplify overhead—context switches, synchronization, cache/memory contention, and I/O latency—rather than useful work; with 500 threads you heavily oversubscribe the CPU, causing thrashing and degraded locality, so performance typically worsens. With 200 threads you still exceed the core count, but the oversubscription and coordination costs are smaller than with 500, so 200 threads generally performs better than 500—though both are usually inferior to using roughly the number of physical cores (or a modest multiple when work is I/O-bound).
+
+##### **Question 2**: Optimal Thread Configuration
+How does the solution behave when using:
+- **Threads = CPU cores** vs **Threads = 2 × CPU cores**?
+
+**Comparative Analysis**:
+- Performance differences
+- Resource utilization efficiency
+- Overhead considerations
+
+**Findings**: Using as many threads as CPU cores usually gives near-optimal performance because it matches the hardware’s parallel execution capacity without excessive overhead. Doubling the thread count beyond the core count often leads to diminishing returns or even worse performance, as the CPU must context-switch between more threads than it can run simultaneously, increasing scheduling overhead and reducing cache efficiency.
+
+##### **Question 3**: Distributed Computing Scenarios
+
+**Scenario A**: Instead of 100 threads on **1 CPU**, use **1 thread** on each of **100 hypothetical machines**
+- Would Amdahl's Law apply better?
+- What are the theoretical advantages?
+
+**Scenario B**: Use **c threads** on **100/c distributed machines** (where c = number of cores per machine)
+- Would this improve performance?
+- What distributed computing factors come into play?
+
+**Analysis**: Yes, Amdahl’s Law would apply more effectively with one thread per machine because each thread would run on a dedicated core without local contention, minimizing context switching and cache thrashing, so parallelization would be closer to ideal. Distributing the same total threads across multiple machines with c threads per machine (on 100/c machines) would also improve efficiency compared to running all threads on a single CPU, as each machine can exploit its cores fully while spreading workload and reducing scheduling overhead. However, this introduces network and coordination overhead, so beyond a point the gains diminish; scalability improves but is still ultimately limited by the sequential fraction of the algorithm.
+
+---
+
+## 📋 **Conclusions & Key Insights**
+
+### ✅ **Technical Achievements**
+
+1. **Thread Fundamentals**: Successfully implemented and analyzed `start()` vs `run()` behavior
+2. **Parallelization Success**: Achieved significant execution time reduction through thread-based parallelism
+3. **Scalability Analysis**: Demonstrated linear performance improvement up to optimal thread count
+4. **Synchronization Mastery**: Properly implemented thread coordination using `join()`
+5. **Embarrassingly Parallel Problem**: Identified and leveraged independent workload segments
+
+### 📊 **Performance Insights**
+
+- **Linear Scaling**: Performance improvement scales linearly with thread count up to hardware limits
+- **CPU Utilization**: Effectively leverages multiple processor cores
+- **Optimal Configuration**: Best performance achieved at [OPTIMAL_THREADS] threads
+- **Diminishing Returns**: Performance degrades beyond optimal thread count due to context switching overhead
+- 
+---
