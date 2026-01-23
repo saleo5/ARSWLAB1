@@ -16,11 +16,20 @@
 **Parte I - Introducción a Hilos en Java**
 
 1. De acuerdo con lo revisado en las lecturas, complete las clases CountThread, para que las mismas definan el ciclo de vida de un hilo que imprima por pantalla los números entre A y B.
+Definí lo siguiente en la clase de CounThread:  
+![](img/CountThread.png)  
+Como se ve, tome la decision de implementar la clase de Thread, con esto, definí que CountThread tuviera un constructor con los numeros de A y B como se pedía en el enunciado, luego, utilice el metodo de run() con un ciclo entre los dos números dados.
+
 2. Complete el método __main__ de la clase CountMainThreads para que:
 	1. Cree 3 hilos de tipo CountThread, asignándole al primero el intervalo [0..99], al segundo [99..199], y al tercero [200..299].
-	2. Inicie los tres hilos con 'start()'.
+	2. Inicie los tres hilos con 'start()'.  
+	![](img/DefinirRangos.png)  
+	Se definieron los rangos, se ejecuto con start()
 	3. Ejecute y revise la salida por pantalla. 
-	4. Cambie el incio con 'start()' por 'run()'. Cómo cambia la salida?, por qué?.
+	![](img/CountThreadStart.png)
+	4. Cambie el incio con 'start()' por 'run()'. Cómo cambia la salida?, por qué?.  
+	![](img/CountThreadRun.png)
+	Al realizar el cambio de start a run, como se explicaba en la lectura, el start crea un nuevo hilo y lo ejecuta, esto se hace de forma independiente, por cada start que se realiza, mientras que el run, empieza a el ciclo del hilo en el metodo, no todos en simultaneo, por lo que aparece asi, con un solo thread llamado main
 
 **Parte II - Ejercicio Black List Search**
 
