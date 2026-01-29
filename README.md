@@ -28,7 +28,7 @@ Como se ve, tome la decision de implementar la clase de Thread, con esto, defin�
 	3. Ejecute y revise la salida por pantalla. 
 	![](img/CountThreadStart.png)
 	4. Cambie el incio con 'start()' por 'run()'. Cómo cambia la salida?, por qué?.  
-	![](img/CountThreadRun.png)
+	![](img/CountThreadRun.png)  
 	Al realizar el cambio de start a run, como se explicaba en la lectura, el start crea un nuevo hilo y lo ejecuta, esto se hace de forma independiente, por cada start que se realiza, mientras que el run, empieza a el ciclo del hilo en el metodo, no todos en simultaneo, por lo que aparece asi, con un solo thread llamado main
 
 **Parte II - Ejercicio Black List Search**
@@ -57,13 +57,16 @@ Al programa de prueba provisto (Main), le toma sólo algunos segundos análizar 
 
 Para 'refactorizar' este código, y hacer que explote la capacidad multi-núcleo de la CPU del equipo, realice lo siguiente:
 
-1. Cree una clase de tipo Thread que represente el ciclo de vida de un hilo que haga la búsqueda de un segmento del conjunto de servidores disponibles. Agregue a dicha clase un método que permita 'preguntarle' a las instancias del mismo (los hilos) cuantas ocurrencias de servidores maliciosos ha encontrado o encontró.
+1. Cree una clase de tipo Thread que represente el ciclo de vida de un hilo que haga la búsqueda de un segmento del conjunto de servidores disponibles. Agregue a dicha clase un método que permita 'preguntarle' a las instancias del mismo (los hilos) cuantas ocurrencias de servidores maliciosos ha encontrado o encontró.  
+![](img/bclthread.png)  
+La clase se creó como se puede ver en el repositorio, en esta se puede ver como definí por medio del run, que recorra las listas negras en busqueda del segmento que se asigne, hay varios contadores, que definen las cantidad de listas que se checkearon, la cantidad de veces que aparece el segmento en las listas negras, y una lista en donde se añadirán las listas en las que apareció ese segmento.
 
 2. Agregue al método 'checkHost' un parámetro entero N, correspondiente al número de hilos entre los que se va a realizar la búsqueda (recuerde tener en cuenta si N es par o impar!). Modifique el código de este método para que divida el espacio de búsqueda entre las N partes indicadas, y paralelice la búsqueda a través de N hilos. Haga que dicha función espere hasta que los N hilos terminen de resolver su respectivo sub-problema, agregue las ocurrencias encontradas por cada hilo a la lista que retorna el método, y entonces calcule (sumando el total de ocurrencuas encontradas por cada hilo) si el número de ocurrencias es mayor o igual a _BLACK_LIST_ALARM_COUNT_. Si se da este caso, al final se DEBE reportar el host como confiable o no confiable, y mostrar el listado con los números de las listas negras respectivas. Para lograr este comportamiento de 'espera' revise el método [join](https://docs.oracle.com/javase/tutorial/essential/concurrency/join.html) del API de concurrencia de Java. Tenga también en cuenta:
 
 	* Dentro del método checkHost Se debe mantener el LOG que informa, antes de retornar el resultado, el número de listas negras revisadas VS. el número de listas negras total (línea 60). Se debe garantizar que dicha información sea verídica bajo el nuevo esquema de procesamiento en paralelo planteado.
 
-	* Se sabe que el HOST 202.24.34.55 está reportado en listas negras de una forma más dispersa, y que el host 212.24.24.55 NO está en ninguna lista negra.
+	* Se sabe que el HOST 202.24.34.55 está reportado en listas negras de una forma más dispersa, y que el host 212.24.24.55 NO está en ninguna lista negra.  
+![](img/checkhost.png)  
 
 
 **Parte II.I Para discutir la próxima clase (NO para implementar aún)**
