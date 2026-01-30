@@ -2,6 +2,7 @@
 ### Escuela Colombiana de Ingeniería
 ### Arquitecturas de Software - ARSW
 ## Ejercicio Introducción al paralelismo - Hilos - Caso BlackListSearch
+## Samuel Leonardo Albarracin Vergara
 
 
 ### Dependencias:
@@ -65,13 +66,15 @@ La clase se creó como se puede ver en el repositorio, en esta se puede ver como
 
 	* Dentro del método checkHost Se debe mantener el LOG que informa, antes de retornar el resultado, el número de listas negras revisadas VS. el número de listas negras total (línea 60). Se debe garantizar que dicha información sea verídica bajo el nuevo esquema de procesamiento en paralelo planteado.
 
-	* Se sabe que el HOST 202.24.34.55 está reportado en listas negras de una forma más dispersa, y que el host 212.24.24.55 NO está en ninguna lista negra.  
+	* Se sabe que el HOST 202.24.34.55 está reportado en listas negras de una forma más dispersa, y que el host 212.24.24.55 NO está en ninguna lista negra. 
 ![](img/checkhost.png)  
-
+El metodo de checkhost fue modificado en varios aspectos, para empezar ingrese la variable de N, la cual es la cantidad de hilos que van a buscar en las checklist, se divide el espacio equitativamente dependiendo de los N hilos que haya, para que no recorran todos el mismo espacio Se crea un arreglo de N hilos de tipo BlackListThread, asignando a cada uno su rango específico (inicio y fin) del espacio de búsqueda. Se inician todos los hilos con start, y luego implementé un join para esperar a que todos los hilos terminen antes de consolidar resultados. Por ultimo Se suman las ocurrencias, listas negras encontradas y listas revisadas de todos los hilos para obtener el resultado final y determinar si la IP es confiable o no.
 
 **Parte II.I Para discutir la próxima clase (NO para implementar aún)**
 
-La estrategia de paralelismo antes implementada es ineficiente en ciertos casos, pues la búsqueda se sigue realizando aún cuando los N hilos (en su conjunto) ya hayan encontrado el número mínimo de ocurrencias requeridas para reportar al servidor como malicioso. Cómo se podría modificar la implementación para minimizar el número de consultas en estos casos?, qué elemento nuevo traería esto al problema?
+La estrategia de paralelismo antes implementada es ineficiente en ciertos casos, pues la búsqueda se sigue realizando aún cuando los N hilos (en su conjunto) ya hayan encontrado el número mínimo de ocurrencias requeridas para reportar al servidor como malicioso. Cómo se podría modificar la implementación para minimizar el número de consultas en estos casos?, qué elemento nuevo traería esto al problema?  
+La solución que propongo, es crear una variable compartida entre los diferentes hilos, que vaya contando el total de ocurrencias encontradas. Cada uno de los hilos consultaría esta cariable antes de cada consulta, para que no sigan consultando en el caso de que ya lleve 5 ocurrencias ese segmento seleccionado.  
+El elemento nuevo que propongo es utilizar una variable con synchronized para bloquear acceso a variables compartidas.
 
 **Parte III - Evaluación de Desempeño**
 
@@ -85,17 +88,29 @@ A partir de lo anterior, implemente la siguiente secuencia de experimentos para 
 
 Al iniciar el programa ejecute el monitor jVisualVM, y a medida que corran las pruebas, revise y anote el consumo de CPU y de memoria en cada caso. ![](img/jvisualvm.png)
 
-Con lo anterior, y con los tiempos de ejecución dados, haga una gráfica de tiempo de solución vs. número de hilos. Analice y plantee hipótesis con su compañero para las siguientes preguntas (puede tener en cuenta lo reportado por jVisualVM):
+Con lo anterior, y con los tiempos de ejecución dados, haga una gráfica de tiempo de solución vs. número de hilos. Analice y plantee hipótesis con su compañero para las siguientes preguntas (puede tener en cuenta lo reportado por jVisualVM):  
+Estos fueron los resultados en el programa de visualvm:   
+![](img/resultadovm.png)  
+Estos fueron los resultados en consola, de los tiempos de ejecución dependiendo de la cantidad de hilos:  
+![](img/resultadopruebashilos.png)  
+tiempo de solucion vs número de hilos:  
+![](img/graficaresultados.png)  
+
 
 **Parte IV - Ejercicio Black List Search**
 
 1. Según la [ley de Amdahls](https://www.pugetsystems.com/labs/articles/Estimating-CPU-Performance-using-Amdahls-Law-619/#WhatisAmdahlsLaw?):
 
-	![](img/ahmdahls.png), donde _S(n)_ es el mejoramiento teórico del desempeño, _P_ la fracción paralelizable del algoritmo, y _n_ el número de hilos, a mayor _n_, mayor debería ser dicha mejora. Por qué el mejor desempeño no se logra con los 500 hilos?, cómo se compara este desempeño cuando se usan 200?. 
+	![](img/ahmdahls.png), donde _S(n)_ es el mejoramiento teórico del desempeño, _P_ la fracción paralelizable del algoritmo, y _n_ el número de hilos, a mayor _n_, mayor debería ser dicha mejora. Por qué el mejor desempeño no se logra con los 500 hilos?, cómo se compara este desempeño cuando se usan 200?.  
+	![](img/500200.png)  
+	Aquí se puede ver el resultado de realizarlo con los 500 y 200 hilos, investigué, y lo común es que al aplicar mas hilos, el proceso sea mas lento, debido al join(), ya que se llega a un punto en donde estén muchos hilos en estado de espera, lo que lo haría mas lento
 
-2. Cómo se comporta la solución usando tantos hilos de procesamiento como núcleos comparado con el resultado de usar el doble de éste?.
+2. Cómo se comporta la solución usando tantos hilos de procesamiento como núcleos comparado con el resultado de usar el doble de éste?.  
+Gracias a que los hilos no están compitiendo por la CPU, se ve una mejora significativa en los tiempos entre N (cantidad de nucleos disponibles), y 2N 
+
 
 3. De acuerdo con lo anterior, si para este problema en lugar de 100 hilos en una sola CPU se pudiera usar 1 hilo en cada una de 100 máquinas hipotéticas, la ley de Amdahls se aplicaría mejor?. Si en lugar de esto se usaran c hilos en 100/c máquinas distribuidas (siendo c es el número de núcleos de dichas máquinas), se mejoraría?. Explique su respuesta.
-
+- Si, mejoraría ya que no habría hilos compitiendo entre si por recursos como de memoria o de CPU.
+- Si, si lo vemos de una forma como personas (hilos en este caso) y maquinas, como asientos en un transmilenio por ejemplo, es mejor como se aprovechan los recursis si lo hacemos de esta forma, por ejemplo, 100 personas en 8 asientos del transmilenio, no es una buena idea, 1 persona y 100 asientos, puede que la persona vaya bien, pero no se está aprovechando en su totalidad el entorno, en cambio para nuestro caso 8 personas en 13 transmilenios con 8 asientos es lo mejor entre estas tres soluciones.
 
 
